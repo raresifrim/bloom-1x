@@ -1,0 +1,7 @@
+[package]
+name = "bloom-1x"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+xoodoo-hash = { git = "ssh://git@github.com/raresifrim/xoodoo-hash.git", version = "0.1.0" }
