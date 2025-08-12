@@ -23,6 +23,27 @@ mod tests {
     }
 
     #[test]
+    fn query_and_update() {
+        let mut bloom_filter = Bloom1X::new(4, u16::MAX as usize + 1, 96, 96);
+
+        //generate first 2^16 numbers
+        for i in 0..(u16::MAX as u32 + 1) {
+            assert!(bloom_filter.query_and_set_u32(i) == 0);
+        }
+
+        //check filter for current members
+        let mut count = 0;
+        for i in (u16::MAX as u32 + 1)..(2 * u16::MAX as u32) {
+            let result= bloom_filter.query_u64_with_result(i as u64);
+            count += result.and_result;
+            bloom_filter.update_filter(result);
+            assert!(bloom_filter.query_u32(i) == 1);
+        }
+
+        println!("Number of false positives: {}", count);
+    }
+
+    #[test]
     fn false_positive_768KB_small() {
         let mut bloom_filter = Bloom1X::new(4, u16::MAX as usize + 1, 96, 96);
 

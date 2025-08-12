@@ -16,15 +16,13 @@ pub struct Bloom1X {
 }
 
 /// contains the info of a query given a hash digest
-struct QueryResult {
-    /// gets the values of each sub-hash
-    bits: Vec<u8>,
+pub struct QueryResult {
     /// gets the index where the bit is found inside a row
     bit_indexes: Vec<usize>,
     /// gets the row index inside the filter
     row_index: usize,
     /// gets the bitwise and result between the bits
-    and_result: u8
+    pub and_result: u8
 }
 
 impl Bloom1X {
@@ -46,7 +44,7 @@ impl Bloom1X {
         let hash_bits = (h - row_bits) / k;
 
         let mut filter = vec![];
-        for i in 0..l {
+        for _ in 0..l {
             let row = vec![0 as u8; w/8];
             filter.push(row.into_boxed_slice());
         }
@@ -91,6 +89,23 @@ impl Bloom1X {
         query_result.and_result
     }
 
+     pub fn query_bytes_with_result(&self, bytes: &[u8]) -> QueryResult {
+        assert!(bytes.len() * 8 <= 96); //can query keys of maximum 96-bits size
+        let mut hasher = XoodooHash::<XoodooStateNC>::new_from_bytes(bytes);
+        hasher.permute_nc();
+        let digest = hasher.digest_nc();
+        let query_result = self.parse_hash(&digest);
+        query_result
+    }
+
+    pub fn query_u64_with_result(&self, bytes: u64) -> QueryResult {
+        let mut hasher = XoodooHash::<XoodooStateNC>::new_from_u64(bytes);
+        hasher.permute_nc();
+        let digest = hasher.digest_nc();
+        let query_result = self.parse_hash(&digest);
+        query_result
+    }
+
     /// given a digest obtained from the hash function, outputs the query info
     #[inline]
     fn parse_hash(&self, digest: &[u32; 3]) -> QueryResult {
@@ -101,7 +116,6 @@ impl Bloom1X {
         //println!("concatenated digest -> {:X}", digest);
         let row = &self.filter[row_index];
 
-        let mut bits= vec![];
         let mut bit_indexes= vec![];
         let mut and_result: u8 = 1;
         for i in 0..self.k {
@@ -109,16 +123,15 @@ impl Bloom1X {
             let byte = row[bit_index/8];
             let bit = (byte >> (bit_index % 8)) & 0x1;
             //println!("bit_value= {bit} in byte {:X} @ position {bit_index} @ row {row_index}", byte);
-            bits.push(bit);
             bit_indexes.push(bit_index);
             and_result &= bit;   
         }
-        QueryResult { bits, bit_indexes, row_index, and_result }
+        QueryResult { bit_indexes, row_index, and_result }
     }
 
     /// given a query result, update the filter
     #[inline]
-    fn update_filter(&mut self, qr: QueryResult) {
+    pub fn update_filter(&mut self, qr: QueryResult) {
         let row = &mut self.filter[qr.row_index];
         for i in 0..self.k {
             let bit_index = qr.bit_indexes[i];
