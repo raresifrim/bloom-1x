@@ -18,7 +18,7 @@ pub struct Bloom1X {
 }
 
 /// contains the info of a query given a hash digest
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct QueryResult {
     /// gets the index where the bit is found inside a row
     bit_indexes: Vec<usize>,
@@ -109,6 +109,20 @@ impl Bloom1X {
         query_result
     }
 
+    // given an older query result, check the current and_result again
+    pub fn query_by_result(&self, qr: QueryResult) -> u8 {
+        let row = &self.filter[qr.row_index];
+        let mut and_result: u8 = 1;
+        for i in 0..self.k {
+            let bit_index = qr.bit_indexes[i];
+            let mut byte = row[bit_index/8];
+            byte |= 1 << (bit_index % 8);
+            let bit = (byte >> (bit_index % 8)) & 0x1;
+            and_result &= bit;   
+        }
+        and_result
+    }
+
     /// given a digest obtained from the hash function, outputs the query info
     #[inline(always)]
     fn parse_hash(&self, digest: &[u32; 3]) -> QueryResult {
@@ -124,7 +138,6 @@ impl Bloom1X {
             let bit_index = (digest >> (i * self.hash_bits)) as usize % self.w;
             let byte = row[bit_index/8];
             let bit = (byte >> (bit_index % 8)) & 0x1;
-            //println!("bit_value= {bit} in byte {:X} @ position {bit_index} @ row {row_index}", byte);
             bit_indexes.push(bit_index);
             and_result &= bit;   
         }

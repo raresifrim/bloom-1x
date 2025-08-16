@@ -44,7 +44,7 @@ mod tests {
     }
 
     #[test]
-    fn false_positive_768KB_small() {
+    fn false_positive_768kb_small() {
         let mut bloom_filter = Bloom1X::new(4, u16::MAX as usize + 1, 96, 96);
 
         //generate first 2^16 numbers
@@ -75,7 +75,7 @@ mod tests {
     }
 
     #[test]
-    fn false_positive_768KB_large() {
+    fn false_positive_768kb_large() {
         let mut bloom_filter = Bloom1X::new(4, u16::MAX as usize + 1, 96, 96);
 
         let mut count: usize = 0;
@@ -97,7 +97,7 @@ mod tests {
     }
 
     #[test]
-    fn false_positive_36Kb_small() {
+    fn false_positive_36kb_small() {
         let mut bloom_filter = Bloom1X::new(2, 1024, 32, 96);
 
         let mut count: usize = 0;
@@ -151,5 +151,18 @@ mod tests {
         println!("Computed False Positive rate = {}", p);
     }
 
-    
+    #[test]
+    fn query_by_result() {
+         let mut bloom_filter = Bloom1X::new(4, u16::MAX as usize + 1, 96, 96);
+
+        //generate first 2^16 numbers
+        for i in 0..10000 {
+            let qr = bloom_filter.query_u64_with_result(i as u64);
+            assert!(qr.and_result == 0);
+            bloom_filter.update_filter(qr.clone());
+            let result = bloom_filter.query_by_result(qr);
+            assert!(result == 1);
+        }
+
+    }
 }
