@@ -1,5 +1,7 @@
 
 use ::xoodoo_hash::xoodoo_hash::{xoodoo_state::{XoodooStateNC}, XoodooHash};
+
+#[derive(Debug)]
 pub struct Bloom1X {
     /// number of hashes
     k: usize,
@@ -16,6 +18,7 @@ pub struct Bloom1X {
 }
 
 /// contains the info of a query given a hash digest
+#[derive(Debug)]
 pub struct QueryResult {
     /// gets the index where the bit is found inside a row
     bit_indexes: Vec<usize>,
@@ -107,13 +110,12 @@ impl Bloom1X {
     }
 
     /// given a digest obtained from the hash function, outputs the query info
-    #[inline]
+    #[inline(always)]
     fn parse_hash(&self, digest: &[u32; 3]) -> QueryResult {
         let row_index = (digest[2] >> (32 - self.row_bits)) as usize; 
         let high_bits = digest[2] << self.row_bits;
 
         let digest:u128 = digest[0] as u128 | ((digest[1] as u128) << 32) | (high_bits as u128) << (64 - self.row_bits);
-        //println!("concatenated digest -> {:X}", digest);
         let row = &self.filter[row_index];
 
         let mut bit_indexes= vec![];
@@ -130,7 +132,7 @@ impl Bloom1X {
     }
 
     /// given a query result, update the filter
-    #[inline]
+    #[inline(always)]
     pub fn update_filter(&mut self, qr: QueryResult) {
         let row = &mut self.filter[qr.row_index];
         for i in 0..self.k {
