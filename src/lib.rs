@@ -36,7 +36,7 @@ mod tests {
         for i in (u16::MAX as u32 + 1)..(2 * u16::MAX as u32) {
             let result= bloom_filter.query_u64_with_result(i as u64);
             count += result.and_result;
-            bloom_filter.update_filter(result);
+            bloom_filter.update_filter(&result);
             assert!(bloom_filter.query_u32(i) == 1);
         }
 
@@ -159,8 +159,8 @@ mod tests {
         for i in 0..10000 {
             let qr = bloom_filter.query_u64_with_result(i as u64);
             assert!(qr.and_result == 0);
-            bloom_filter.update_filter(qr.clone());
-            let result = bloom_filter.query_by_result(qr);
+            bloom_filter.update_filter(&qr);
+            let result = bloom_filter.query_by_result(&qr);
             assert!(result == 1);
         }
 

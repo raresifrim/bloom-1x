@@ -110,7 +110,7 @@ impl Bloom1X {
     }
 
     // given an older query result, check the current and_result again
-    pub fn query_by_result(&self, qr: QueryResult) -> u8 {
+    pub fn query_by_result(&self, qr: &QueryResult) -> u8 {
         let row = &self.filter[qr.row_index];
         let mut and_result: u8 = 1;
         for i in 0..self.k {
@@ -146,7 +146,7 @@ impl Bloom1X {
 
     /// given a query result, update the filter
     #[inline(always)]
-    pub fn update_filter(&mut self, qr: QueryResult) {
+    pub fn update_filter(&mut self, qr: &QueryResult) {
         let row = &mut self.filter[qr.row_index];
         for i in 0..self.k {
             let bit_index = qr.bit_indexes[i];
@@ -165,7 +165,7 @@ impl Bloom1X {
         let digest = hasher.digest_nc();
         let query_result = self.parse_hash(&digest);
         let result = query_result.and_result;
-        self.update_filter(query_result);
+        self.update_filter(&query_result);
         result
     }
 
@@ -175,7 +175,7 @@ impl Bloom1X {
         let digest = hasher.digest_nc();
         let query_result = self.parse_hash(&digest);
         let result = query_result.and_result;
-        self.update_filter(query_result);
+        self.update_filter(&query_result);
         result    
     }
 
@@ -185,7 +185,7 @@ impl Bloom1X {
         let digest = hasher.digest_nc();
         let query_result = self.parse_hash(&digest);
         let result = query_result.and_result;
-        self.update_filter(query_result);
+        self.update_filter(&query_result);
         result   
     }
 }
