@@ -115,8 +115,7 @@ impl Bloom1X {
         let mut and_result: u8 = 1;
         for i in 0..self.k {
             let bit_index = qr.bit_indexes[i];
-            let mut byte = row[bit_index/8];
-            byte |= 1 << (bit_index % 8);
+            let byte = row[bit_index/8];
             let bit = (byte >> (bit_index % 8)) & 0x1;
             and_result &= bit;   
         }
