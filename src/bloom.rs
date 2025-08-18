@@ -122,6 +122,26 @@ impl Bloom1X {
         and_result
     }
 
+    //given a u64, search its position in the filter and return the row index and bit indexes for all sub-hashes
+    pub fn search_u64(&self, bytes: u64) -> QueryResult {
+        let mut hasher = XoodooHash::<XoodooStateNC>::new_from_u64(bytes);
+        hasher.permute_nc();
+        let digest = hasher.digest_nc();
+
+        let row_index = (digest[2] >> (32 - self.row_bits)) as usize; 
+        let high_bits = digest[2] << self.row_bits;
+
+        let digest:u128 = digest[0] as u128 | ((digest[1] as u128) << 32) | (high_bits as u128) << (64 - self.row_bits);
+
+        let mut bit_indexes= vec![];
+        for i in 0..self.k {
+            let bit_index = (digest >> (i * self.hash_bits)) as usize % self.w;
+            bit_indexes.push(bit_index); 
+        }
+        
+        QueryResult { bit_indexes, row_index, and_result:0 }
+    }
+
     /// given a digest obtained from the hash function, outputs the query info
     #[inline(always)]
     fn parse_hash(&self, digest: &[u32; 3]) -> QueryResult {
