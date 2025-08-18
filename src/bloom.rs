@@ -21,9 +21,9 @@ pub struct Bloom1X {
 #[derive(Debug, Clone)]
 pub struct QueryResult {
     /// gets the index where the bit is found inside a row
-    bit_indexes: Vec<usize>,
+    pub(crate) bit_indexes: Vec<usize>,
     /// gets the row index inside the filter
-    row_index: usize,
+    pub(crate) row_index: usize,
     /// gets the bitwise and result between the bits
     pub and_result: u8
 }
@@ -128,6 +128,28 @@ impl Bloom1X {
         hasher.permute_nc();
         let digest = hasher.digest_nc();
 
+        let row_index = (digest[2] >> (32 - self.row_bits)) as usize; 
+        let high_bits = digest[2] << self.row_bits;
+
+        let digest:u128 = digest[0] as u128 | ((digest[1] as u128) << 32) | (high_bits as u128) << (64 - self.row_bits);
+
+        let mut bit_indexes= vec![];
+        for i in 0..self.k {
+            let bit_index = (digest >> (i * self.hash_bits)) as usize % self.w;
+            bit_indexes.push(bit_index); 
+        }
+        
+        QueryResult { bit_indexes, row_index, and_result:0 }
+    }
+
+    //given an array of bytes, search their position in the filter and return the row index and bit indexes for all sub-hashes
+    pub fn search_bytes(&self, bytes: &[u8]) -> QueryResult {
+        assert!(bytes.len() * 8 <= 96); //can query keys of maximum 96-bits size
+        
+        let mut hasher = XoodooHash::<XoodooStateNC>::new_from_bytes(bytes);
+        hasher.permute_nc();
+        let digest = hasher.digest_nc();
+        
         let row_index = (digest[2] >> (32 - self.row_bits)) as usize; 
         let high_bits = digest[2] << self.row_bits;
 

@@ -165,4 +165,18 @@ mod tests {
         }
 
     }
+
+    #[test]
+    fn search_bytes() {
+         let bloom_filter = Bloom1X::new(4, u16::MAX as usize + 1, 96, 96);
+
+        //generate first 2^16 numbers
+        for i in 0..10000 {
+            let bytes = u64::to_le_bytes(i);
+            let qr1 = bloom_filter.query_bytes_with_result(&bytes);
+            let qr2 = bloom_filter.search_bytes(&bytes);
+            assert!(qr1.bit_indexes == qr2.bit_indexes && qr1.row_index == qr2.row_index);
+        }
+
+    }
 }
