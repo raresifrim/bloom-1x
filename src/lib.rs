@@ -1,8 +1,10 @@
 pub mod bloom;
+pub mod bloom_counter;
 
 #[cfg(test)]
 mod tests {
     use crate::bloom::Bloom1X;
+    use crate::bloom_counter::Bloom1Counter;
 
     #[test]
     fn filter_membership() {
@@ -178,5 +180,61 @@ mod tests {
             assert!(qr1.bit_indexes == qr2.bit_indexes && qr1.row_index == qr2.row_index);
         }
 
+    }
+
+     #[test]
+    fn query_and_update_counters() {
+        let mut bloom_filter = Bloom1Counter::new(4, u16::MAX as usize + 1, 96, 96);
+
+        //generate first 2^16 numbers
+        //and increment counters once
+        for i in 0..(u16::MAX as u32 + 1) {
+            assert!(bloom_filter.query_and_inc_u32(i) == 0);
+            let current_filter = bloom_filter.get_counters_u32(i);
+            println!("Index {i} -> Counter Result: {:?}", current_filter);
+            for k in 0..4{
+                assert!(current_filter.counters[k] >= 1);
+            }
+        }
+
+        //increment counters twice
+        for i in 0..(u16::MAX as u32 + 1) {
+            assert!(bloom_filter.query_and_inc_u32(i) == 1);
+            let current_filter = bloom_filter.get_counters_u32(i);
+            println!("Index {i} -> Counter Result: {:?}", current_filter);
+            for k in 0..4{
+                assert!(current_filter.counters[k] >= 2);
+            }
+        }
+
+        //check counters again through different function
+        for i in 0..(u16::MAX as u32 + 1) {
+            assert!(bloom_filter.query_u32(i) == 1);
+            let current_filter = bloom_filter.get_counters_u32(i);
+            for k in 0..4{
+                assert!(current_filter.counters[k] >= 2);
+            }
+        }
+
+         //decrement counters once
+        for i in 0..(u16::MAX as u32 + 1) {
+            assert!(bloom_filter.query_and_dec_u32(i) == 1);
+            let current_filter = bloom_filter.get_counters_u32(i);
+            println!("Index {i} -> Counter Result: {:?}", current_filter);
+        }
+
+        //decrement counters twice
+        for i in 0..(u16::MAX as u32 + 1) {
+            assert!(bloom_filter.query_and_dec_u32(i) == 1);
+            let current_filter = bloom_filter.get_counters_u32(i);
+            println!("Index {i} -> Counter Result: {:?}", current_filter);
+            for k in 0..4{
+                assert!(current_filter.counters[k] == 0);
+            }
+        }
+
+        for i in 0..(u16::MAX as u32 + 1) {
+            assert!(bloom_filter.query_u32(i) == 0);
+        }
     }
 }
