@@ -66,7 +66,7 @@ impl Bloom1X {
     /// the query functions check if a provided key is member of the filter
     /// returns 0x1 if the provided bytes were found inside the filter and 0x0 otherwise
     pub fn query_bytes(&self, bytes: &[u8]) -> u8 {
-        assert!(bytes.len() * 8 <= 96); //can query keys of maximum 96-bits size
+        assert!(bytes.len() <= 48); //limit to 48 bytes
         let mut hasher = XoodooHash::<XoodooStateNC>::new_from_bytes(bytes);
         hasher.permute_nc();
         let digest = hasher.digest_nc();
@@ -93,7 +93,7 @@ impl Bloom1X {
     }
 
      pub fn query_bytes_with_result(&self, bytes: &[u8]) -> QueryResult {
-        assert!(bytes.len() * 8 <= 96); //can query keys of maximum 96-bits size
+        assert!(bytes.len() <= 48); //limit to 48 bytes
         let mut hasher = XoodooHash::<XoodooStateNC>::new_from_bytes(bytes);
         hasher.permute_nc();
         let digest = hasher.digest_nc();
@@ -144,7 +144,7 @@ impl Bloom1X {
 
     //given an array of bytes, search their position in the filter and return the row index and bit indexes for all sub-hashes
     pub fn search_bytes(&self, bytes: &[u8]) -> QueryResult {
-        assert!(bytes.len() * 8 <= 96); //can query keys of maximum 96-bits size
+        assert!(bytes.len() <= 48); //limit to 48 bytes
         
         let mut hasher = XoodooHash::<XoodooStateNC>::new_from_bytes(bytes);
         hasher.permute_nc();
@@ -200,7 +200,7 @@ impl Bloom1X {
     /// this functions queris the memebership returning the true/false response
     /// and also updates the filter with the new bits 
     pub fn query_and_set_bytes(&mut self, bytes: &[u8]) -> u8 {
-        assert!(bytes.len() * 8 <= 96); //can query keys of maximum 96-bits size
+        assert!(bytes.len() <= 48); //limit to 48 bytes
         let mut hasher = XoodooHash::<XoodooStateNC>::new_from_bytes(bytes);
         hasher.permute_nc();
         let digest = hasher.digest_nc();

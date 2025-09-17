@@ -146,11 +146,44 @@ mod tests {
             count as f64 / (2.0 * u16::MAX as f64)
         );
 
+        bloom_filter.clear();
+
+        let mut bytes: [u8; 48] = [0x01, 0x2C, 0x48, 0x7E, 0xDD, 0xAD, 0x45, 0x34, 0x84, 0x2E, 0x31, 0x90, 0x67,
+                    0xCD, 0x04, 0xCF, 0xC7, 0xFE, 0x0B, 0x99, 0xE8, 0xB5, 0xC7, 0x69, 0xB9, 0x5C,
+                    0x4A, 0x6E, 0x3F, 0xB1, 0xBF, 0x1D, 0xAD, 0x8A, 0x2D, 0x09, 0x62, 0x1E, 0x7C,
+                    0xE3, 0x5C, 0x42, 0xE8, 0xF0, 0x5B, 0x94, 0xA0, 0xE4];
+
+        let mut count: usize = 0;
+        //test with 4000 elements
+        for i in 0..4000 {
+            bytes[0] = bytes[0].wrapping_add((i & 0xFF) as u8);
+            bytes[1] = bytes[1].wrapping_add(((i >> 8) & 0xFF) as u8);
+            count += bloom_filter.query_and_set_bytes(&bytes) as usize;
+        }
+
+        //check filter for next set of numbers
+        for i in 4000..8000 {
+            bytes[0] = bytes[0].wrapping_add((i & 0xFF) as u8);
+            bytes[1] = bytes[1].wrapping_add(((i >> 8) & 0xFF) as u8);
+            count += bloom_filter.query_and_set_bytes(&bytes) as usize;
+        }
+
+        println!(
+            "False Positives 3 in {} elements = {}",
+            2 * u16::MAX as u32,
+            count
+        );
+        println!(
+            "False Positives 3 rate = {}",
+            count as f64 / (2.0 * u16::MAX as f64)
+        );
+
         let k = 2.0;
         let m = 36.0 * 1024.0; //FPGA BRAM block
         let n = 4000.0;
         let p = f64::powf(1.0 - f64::exp(-k / (m / n)), k);
         println!("Computed False Positive rate = {}", p);
+
     }
 
     #[test]
@@ -170,11 +203,17 @@ mod tests {
 
     #[test]
     fn search_bytes() {
-         let bloom_filter = Bloom1X::new(4, u16::MAX as usize + 1, 96, 96);
+        let bloom_filter = Bloom1X::new(4, u16::MAX as usize + 1, 96, 96);
+
+        let mut bytes: [u8; 48] = [0x01, 0x2C, 0x48, 0x7E, 0xDD, 0xAD, 0x45, 0x34, 0x84, 0x2E, 0x31, 0x90, 0x67,
+                    0xCD, 0x04, 0xCF, 0xC7, 0xFE, 0x0B, 0x99, 0xE8, 0xB5, 0xC7, 0x69, 0xB9, 0x5C,
+                    0x4A, 0x6E, 0x3F, 0xB1, 0xBF, 0x1D, 0xAD, 0x8A, 0x2D, 0x09, 0x62, 0x1E, 0x7C,
+                    0xE3, 0x5C, 0x42, 0xE8, 0xF0, 0x5B, 0x94, 0xA0, 0xE4];
 
         //generate first 2^16 numbers
-        for i in 0..10000 {
-            let bytes = u64::to_le_bytes(i);
+        for i in 0..10000u16 {
+            bytes[0] = bytes[0].wrapping_add((i & 0xFF) as u8);
+            bytes[1] = bytes[1].wrapping_add(((i >> 8) & 0xFF) as u8);
             let qr1 = bloom_filter.query_bytes_with_result(&bytes);
             let qr2 = bloom_filter.search_bytes(&bytes);
             assert!(qr1.bit_indexes == qr2.bit_indexes && qr1.row_index == qr2.row_index);
@@ -191,7 +230,7 @@ mod tests {
         for i in 0..(u16::MAX as u32 + 1) {
             assert!(bloom_filter.query_and_inc_u32(i) == 0);
             let current_filter = bloom_filter.get_counters_u32(i);
-            println!("Index {i} -> Counter Result: {:?}", current_filter);
+            //println!("Index {i} -> Counter Result: {:?}", current_filter);
             for k in 0..4{
                 assert!(current_filter.counters[k] >= 1);
             }
@@ -201,7 +240,7 @@ mod tests {
         for i in 0..(u16::MAX as u32 + 1) {
             assert!(bloom_filter.query_and_inc_u32(i) == 1);
             let current_filter = bloom_filter.get_counters_u32(i);
-            println!("Index {i} -> Counter Result: {:?}", current_filter);
+            //println!("Index {i} -> Counter Result: {:?}", current_filter);
             for k in 0..4{
                 assert!(current_filter.counters[k] >= 2);
             }
@@ -220,14 +259,14 @@ mod tests {
         for i in 0..(u16::MAX as u32 + 1) {
             assert!(bloom_filter.query_and_dec_u32(i) == 1);
             let current_filter = bloom_filter.get_counters_u32(i);
-            println!("Index {i} -> Counter Result: {:?}", current_filter);
+            //println!("Index {i} -> Counter Result: {:?}", current_filter);
         }
 
         //decrement counters twice
         for i in 0..(u16::MAX as u32 + 1) {
             assert!(bloom_filter.query_and_dec_u32(i) == 1);
             let current_filter = bloom_filter.get_counters_u32(i);
-            println!("Index {i} -> Counter Result: {:?}", current_filter);
+            //println!("Index {i} -> Counter Result: {:?}", current_filter);
             for k in 0..4{
                 assert!(current_filter.counters[k] == 0);
             }

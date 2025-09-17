@@ -68,7 +68,7 @@ impl Bloom1Counter {
     /// the query functions check if a provided key is member of the filter
     /// returns 0x1 if the provided bytes were found inside the filter and 0x0 otherwise
     pub fn query_bytes(&self, bytes: &[u8]) -> u8 {
-        assert!(bytes.len() * 8 <= 96); //can query keys of maximum 96-bits size
+        assert!(bytes.len() <= 48); //limit to 48 bytes
         let mut hasher = XoodooHash::<XoodooStateNC>::new_from_bytes(bytes);
         hasher.permute_nc();
         let digest = hasher.digest_nc();
@@ -95,7 +95,7 @@ impl Bloom1Counter {
     }
 
      pub fn query_bytes_with_result(&self, bytes: &[u8]) -> CounterResult {
-        assert!(bytes.len() * 8 <= 96); //can query keys of maximum 96-bits size
+        assert!(bytes.len() <= 48); //limit to 48 bytes
         let mut hasher = XoodooHash::<XoodooStateNC>::new_from_bytes(bytes);
         hasher.permute_nc();
         let digest = hasher.digest_nc();
@@ -162,7 +162,7 @@ impl Bloom1Counter {
 
     //given an array of bytes, search their position in the filter and return the row index and bit indexes for all sub-hashes
     pub fn search_bytes(&self, bytes: &[u8]) -> CounterResult {
-        assert!(bytes.len() * 8 <= 96); //can query keys of maximum 96-bits size
+        assert!(bytes.len() <= 48); //limit to 48 bytes
         
         let mut hasher = XoodooHash::<XoodooStateNC>::new_from_bytes(bytes);
         hasher.permute_nc();
@@ -231,7 +231,7 @@ impl Bloom1Counter {
     /// these functions queries the memebership returning the true/false response
     /// and also increments the counters of the filters
     pub fn query_and_inc_bytes(&mut self, bytes: &[u8]) -> u8 {
-        assert!(bytes.len() * 8 <= 96); //can query keys of maximum 96-bits size
+        assert!(bytes.len() <= 48); //limit to 48 bytes
         let mut hasher = XoodooHash::<XoodooStateNC>::new_from_bytes(bytes);
         hasher.permute_nc();
         let digest = hasher.digest_nc();
@@ -264,7 +264,7 @@ impl Bloom1Counter {
     /// these functions queries the memebership returning the true/false response
     /// and also decrements the counters of the filters
     pub fn query_and_dec_bytes(&mut self, bytes: &[u8]) -> u8 {
-        assert!(bytes.len() * 8 <= 96); //can query keys of maximum 96-bits size
+        assert!(bytes.len() <= 48); //limit to 48 bytes
         let mut hasher = XoodooHash::<XoodooStateNC>::new_from_bytes(bytes);
         hasher.permute_nc();
         let digest = hasher.digest_nc();
